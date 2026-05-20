@@ -132,6 +132,12 @@ button {
   background: rgba(99, 188, 123, 0.14);
 }
 
+.toolbar button.quit:hover {
+  border-color: rgba(232, 120, 108, 0.55);
+  color: #ffe8e4;
+  background: rgba(232, 120, 108, 0.18);
+}
+
 .mini-view {
   height: calc(100vh - 38px);
   padding: 8px;

@@ -15,6 +15,8 @@ const EXPANDED_SIZE = { width: 420, height: 560 };
 let mainWindow: BrowserWindow | null = null;
 let stateStore: WindowStateStore;
 const gsiServer = new GsiServer();
+/** 穿透模式下，鼠标是否在可点击区域（由渲染进程上报） */
+let pointerInteractive = false;
 
 function toWindowBounds(bounds: Electron.Rectangle): WindowBounds {
   return {
@@ -48,8 +50,20 @@ function applyAlwaysOnTop(win: BrowserWindow): void {
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 }
 
-function applyClickThrough(win: BrowserWindow, clickThrough: boolean): void {
-  win.setIgnoreMouseEvents(clickThrough, { forward: true });
+function syncMouseIgnore(win: BrowserWindow): void {
+  const { clickThrough } = stateStore.get();
+  if (!clickThrough) {
+    win.setIgnoreMouseEvents(false);
+    return;
+  }
+  win.setIgnoreMouseEvents(!pointerInteractive, { forward: true });
+}
+
+function applyClickThrough(win: BrowserWindow): void {
+  if (!stateStore.get().clickThrough) {
+    pointerInteractive = false;
+  }
+  syncMouseIgnore(win);
 }
 
 function getSnapshot(): LiveSnapshot {
@@ -73,7 +87,7 @@ function updateOverlayState(partial: Partial<OverlayState>): OverlayState {
   if (!win) return state;
 
   applyAlwaysOnTop(win);
-  applyClickThrough(win, state.clickThrough);
+  applyClickThrough(win);
   if (state.hidden) {
     win.hide();
   } else {
@@ -120,7 +134,7 @@ function createWindow(): BrowserWindow {
   });
 
   applyAlwaysOnTop(win);
-  applyClickThrough(win, state.clickThrough);
+  applyClickThrough(win);
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
@@ -160,22 +174,37 @@ function registerIpc(): void {
   ipcMain.handle('coach:toggle-expanded', () => setExpanded(!stateStore.get().expanded));
   ipcMain.handle('coach:set-expanded', (_event, expanded: boolean) => setExpanded(expanded));
   ipcMain.handle('coach:toggle-click-through', () => updateOverlayState({ clickThrough: !stateStore.get().clickThrough }));
+  ipcMain.handle('coach:set-pointer-interactive', (_event, interactive: boolean) => {
+    if (!mainWindow) return;
+    const next = Boolean(interactive);
+    if (next === pointerInteractive) return;
+    pointerInteractive = next;
+    syncMouseIgnore(mainWindow);
+  });
   ipcMain.handle('coach:hide-overlay', () => updateOverlayState({ hidden: true }));
   ipcMain.handle('coach:show-overlay', () => updateOverlayState({ hidden: false }));
   ipcMain.handle('coach:send-demo-payload', (_event, stage?: DemoStage) => {
     gsiServer.injectPayload(demoPayload(stage));
     return getSnapshot();
   });
+  ipcMain.handle('coach:quit-app', () => {
+    app.quit();
+  });
+}
+
+function registerShortcut(accelerator: string, handler: () => void): void {
+  if (globalShortcut.register(accelerator, handler)) return;
+  console.warn(`[coach] 快捷键注册失败: ${accelerator}`);
 }
 
 function registerShortcuts(): void {
-  globalShortcut.register('CommandOrControl+Shift+F8', () => {
+  registerShortcut('CommandOrControl+Shift+F8', () => {
     updateOverlayState({ clickThrough: !stateStore.get().clickThrough });
   });
-  globalShortcut.register('CommandOrControl+Shift+F9', () => {
+  registerShortcut('CommandOrControl+Shift+F9', () => {
     setExpanded(!stateStore.get().expanded);
   });
-  globalShortcut.register('CommandOrControl+Shift+F10', () => {
+  registerShortcut('CommandOrControl+Shift+F10', () => {
     updateOverlayState({ hidden: !stateStore.get().hidden });
   });
 }

@@ -15,7 +15,7 @@ npm run dev
 
 1. 在 Windows 机器上安装并启动 exe。
 2. 点击扳手按钮写入 GSI 配置。默认 Dota 2 路径：
-   `C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta`
+   `D:\SteamLibrary\steamapps\common\dota 2 beta`
 3. 在 Steam 的 Dota 2 启动项加入：
    `-gamestateintegration`
 4. 将 Dota 2 显示模式设为无边框窗口。
@@ -26,6 +26,7 @@ npm run dev
 - `Ctrl+Shift+F8`：切换点击穿透。
 - `Ctrl+Shift+F9`：切换迷你/展开。
 - `Ctrl+Shift+F10`：显示/隐藏悬浮窗。
+- 标题栏最右侧 **×**：退出应用。
 
 ## 打包
 

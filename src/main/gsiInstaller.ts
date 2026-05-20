@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { GSI_AUTH_TOKEN, GSI_ENDPOINT } from '../shared/gsi.js';
 import type { GsiInstallResult, GsiInstallStatus, RuntimePlatform } from '../shared/types.js';
 
-export const WINDOWS_DEFAULT_DOTA_PATH = String.raw`C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta`;
+export const WINDOWS_DEFAULT_DOTA_PATH = String.raw`D:\SteamLibrary\steamapps\common\dota 2 beta`;
 export const GSI_CONFIG_FILE = 'gamestate_integration_codex_coach.cfg';
 export const GSI_LAUNCH_OPTION = '-gamestateintegration';
 

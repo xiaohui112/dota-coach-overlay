@@ -8,8 +8,11 @@ const api: ElectronCoachApi = {
   toggleExpanded: () => ipcRenderer.invoke('coach:toggle-expanded') as Promise<OverlayState>,
   setExpanded: (expanded: boolean) => ipcRenderer.invoke('coach:set-expanded', expanded) as Promise<OverlayState>,
   toggleClickThrough: () => ipcRenderer.invoke('coach:toggle-click-through') as Promise<OverlayState>,
+  setPointerInteractive: (interactive: boolean) =>
+    ipcRenderer.invoke('coach:set-pointer-interactive', interactive) as Promise<void>,
   hideOverlay: () => ipcRenderer.invoke('coach:hide-overlay') as Promise<OverlayState>,
   showOverlay: () => ipcRenderer.invoke('coach:show-overlay') as Promise<OverlayState>,
+  quitApp: () => ipcRenderer.invoke('coach:quit-app') as Promise<void>,
   sendDemoPayload: (stage?: DemoStage) => ipcRenderer.invoke('coach:send-demo-payload', stage) as Promise<LiveSnapshot>
 };
 

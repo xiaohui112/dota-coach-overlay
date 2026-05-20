@@ -19,7 +19,7 @@ function snapshot(): LiveSnapshot {
     overlay,
     installStatus: {
       platform: 'browser-preview',
-      defaultDotaPath: String.raw`C:\Program Files (x86)\Steam\steamapps\common\dota 2 beta`,
+      defaultDotaPath: String.raw`D:\SteamLibrary\steamapps\common\dota 2 beta`,
       detected: false,
       launchOption: '-gamestateintegration',
       message: '浏览器预览模式'
@@ -49,6 +49,9 @@ export const mockApi: ElectronCoachApi = {
     overlay = { ...overlay, clickThrough: !overlay.clickThrough };
     return overlay;
   },
+  async setPointerInteractive() {
+    // 浏览器预览无穿透
+  },
   async hideOverlay() {
     overlay = { ...overlay, hidden: true };
     return overlay;
@@ -56,6 +59,9 @@ export const mockApi: ElectronCoachApi = {
   async showOverlay() {
     overlay = { ...overlay, hidden: false };
     return overlay;
+  },
+  async quitApp() {
+    // 浏览器预览无退出
   },
   async sendDemoPayload(stage?: DemoStage) {
     liveState = normalizeGsiPayload(demoPayload(stage));

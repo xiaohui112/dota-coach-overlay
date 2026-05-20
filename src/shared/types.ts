@@ -219,7 +219,10 @@ export interface ElectronCoachApi {
   toggleExpanded(): Promise<OverlayState>;
   setExpanded(expanded: boolean): Promise<OverlayState>;
   toggleClickThrough(): Promise<OverlayState>;
+  /** 穿透模式下由渲染进程上报鼠标是否在可交互区域 */
+  setPointerInteractive(interactive: boolean): Promise<void>;
   hideOverlay(): Promise<OverlayState>;
   showOverlay(): Promise<OverlayState>;
+  quitApp(): Promise<void>;
   sendDemoPayload(stage?: 'early' | 'mid' | 'late'): Promise<LiveSnapshot>;
 }

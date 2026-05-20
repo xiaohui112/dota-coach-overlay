@@ -13,6 +13,7 @@ import {
   Shield,
   Swords,
   Wrench,
+  X,
   Zap
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -21,6 +22,14 @@ import { formatGameTime } from '../shared/text.js';
 import { mockApi } from './mockApi.js';
 
 const api: ElectronCoachApi = window.coach ?? mockApi;
+
+const POINTER_INTERACTIVE_SELECTOR =
+  'button, .toolbar, .titlebar, .no-drag, .passthrough-banner, .toast, a, input, textarea, select, [role="button"]';
+
+function isPointerOverInteractive(clientX: number, clientY: number): boolean {
+  const target = document.elementFromPoint(clientX, clientY);
+  return Boolean(target?.closest(POINTER_INTERACTIVE_SELECTOR));
+}
 
 const categoryIcons: Record<AdviceCategory, typeof Package> = {
   setup: Wrench,
@@ -73,13 +82,15 @@ function Toolbar({
   onToggleExpanded,
   onToggleClickThrough,
   onInstall,
-  onDemo
+  onDemo,
+  onQuit
 }: {
   snapshot: LiveSnapshot;
   onToggleExpanded: () => void;
   onToggleClickThrough: () => void;
   onInstall: () => void;
   onDemo: (stage: 'early' | 'mid' | 'late') => void;
+  onQuit: () => void;
 }) {
   const expanded = snapshot.overlay.expanded;
   return (
@@ -100,7 +111,11 @@ function Toolbar({
         </button>
         <button
           type="button"
-          title={snapshot.overlay.clickThrough ? '点击穿透已开' : '切换点击穿透'}
+          title={
+            snapshot.overlay.clickThrough
+              ? '点击穿透已开（悬停工具栏可点，或 Ctrl+Shift+F8）'
+              : '开启点击穿透'
+          }
           className={snapshot.overlay.clickThrough ? 'active' : ''}
           onClick={onToggleClickThrough}
         >
@@ -108,6 +123,9 @@ function Toolbar({
         </button>
         <button type="button" title={expanded ? '迷你模式' : '展开'} onClick={onToggleExpanded}>
           {expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+        </button>
+        <button type="button" className="quit" title="退出应用" onClick={onQuit}>
+          <X size={15} />
         </button>
       </div>
     </header>
@@ -253,6 +271,34 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (!snapshot?.overlay.clickThrough) {
+      void api.setPointerInteractive(false);
+      return;
+    }
+
+    let lastInteractive = false;
+    const report = (interactive: boolean) => {
+      if (interactive === lastInteractive) return;
+      lastInteractive = interactive;
+      void api.setPointerInteractive(interactive);
+    };
+
+    const onPointerMove = (event: MouseEvent) => {
+      report(isPointerOverInteractive(event.clientX, event.clientY));
+    };
+
+    const onPointerLeave = () => report(false);
+
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseleave', onPointerLeave);
+    return () => {
+      window.removeEventListener('mousemove', onPointerMove);
+      window.removeEventListener('mouseleave', onPointerLeave);
+      report(false);
+    };
+  }, [snapshot?.overlay.clickThrough]);
+
   const setOverlayFromAction = async (action: Promise<unknown>) => {
     await action;
     await refresh();
@@ -287,12 +333,13 @@ export function App() {
         onToggleClickThrough={() => void setOverlayFromAction(api.toggleClickThrough())}
         onInstall={() => void install()}
         onDemo={(stage) => void demo(stage)}
+        onQuit={() => void api.quitApp()}
       />
       {snapshot.overlay.expanded ? <DetailView snapshot={snapshot} /> : <MiniView snapshot={snapshot} />}
       {snapshot.overlay.clickThrough && (
-        <div className="passthrough-banner">
+        <div className="passthrough-banner no-drag">
           <EyeOff size={14} />
-          点击穿透
+          点击穿透 · 悬停顶部栏操作 · Ctrl+Shift+F8 关闭
         </div>
       )}
       {toast && <div className="toast">{toast}</div>}
